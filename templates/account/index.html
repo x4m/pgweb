@@ -14,6 +14,20 @@ To submit a new record, or to edit an existing record, select the
 type of record in the menu on the left.
 </p>
 
+<div class="alert alert-info">
+  <h4><i class="fa fa-trophy"></i> Your Achievement Badges</h4>
+  <p>
+    You have earned <strong>{{badge_count}}</strong> badge{%if badge_count != 1%}s{%endif%}!
+    {%if badge_count > 0%}
+    <a href="/account/badges/{{user.username}}/" class="btn btn-sm btn-primary ml-2">
+      <i class="fa fa-eye"></i> View Your Badges
+    </a>
+    {%else%}
+    Keep contributing to the PostgreSQL community to earn your first badge!
+    {%endif%}
+  </p>
+</div>
+
 <h2>Permissions model</h2>
 <p>
 News, Events, Products and Professional Services are attached to an

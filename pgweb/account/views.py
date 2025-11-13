@@ -39,7 +39,7 @@ from pgweb.contributors.models import Contributor
 from pgweb.downloads.models import Product
 from pgweb.profserv.models import ProfessionalService
 
-from .models import CommunityAuthSite, CommunityAuthConsent, SecondaryEmail
+from .models import CommunityAuthSite, CommunityAuthConsent, SecondaryEmail, Badge, UserBadge
 from .forms import PgwebAuthenticationForm, ConfirmSubmitForm
 from .forms import CommunityAuthConsentForm
 from .forms import SignupForm, SignupOauthForm
@@ -92,9 +92,13 @@ def home(request):
             ],
         },
     ]
+    
+    # Get user's badge count
+    badge_count = UserBadge.objects.filter(user=request.user).count()
 
     return render_pgweb(request, 'account', 'account/index.html', {
         'modobjects': filter(lambda x: any(x['objects']), modobjects),
+        'badge_count': badge_count,
     })
 
 
@@ -909,3 +913,15 @@ def communityauth_subscribe(request, siteid):
         })
 
     return HttpResponse(status=201)
+
+
+def user_badges(request, username):
+    """Display a user's badge collection"""
+    user = get_object_or_404(User, username=username)
+    user_badges = UserBadge.objects.filter(user=user).select_related('badge', 'awarded_by')
+    
+    return render_pgweb(request, 'account', 'account/badges.html', {
+        'badge_user': user,
+        'user_badges': user_badges,
+        'title': f"{user.username}'s Badges",
+    })

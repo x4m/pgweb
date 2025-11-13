@@ -12,7 +12,7 @@ from pgweb.util.widgets import TemplateRenderWidget
 from pgweb.util.db import exec_to_dict
 from pgweb.account.views import OAUTH_PASSWORD_STORE
 
-from .models import CommunityAuthSite, CommunityAuthOrg, SecondaryEmail
+from .models import CommunityAuthSite, CommunityAuthOrg, SecondaryEmail, Badge, UserBadge
 
 
 class CommunityAuthSiteAdminForm(forms.ModelForm):
@@ -163,6 +163,30 @@ class PGUserAdmin(UserAdmin):
         return sf + ['secondaryemail__email', ]
 
 
+class BadgeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'icon', 'color', 'order')
+    list_editable = ('order',)
+    search_fields = ('name', 'description')
+    ordering = ('order', 'name')
+
+
+class UserBadgeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'badge', 'awarded_at', 'awarded_by')
+    list_filter = ('badge', 'awarded_at')
+    search_fields = ('user__username', 'user__email', 'badge__name')
+    readonly_fields = ('awarded_at',)
+    autocomplete_fields = ('user', 'awarded_by')
+    ordering = ('-awarded_at',)
+    
+    def save_model(self, request, obj, form, change):
+        # Automatically set awarded_by to the current admin user if not set
+        if not obj.awarded_by:
+            obj.awarded_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+admin.site.register(Badge, BadgeAdmin)
+admin.site.register(UserBadge, UserBadgeAdmin)
 admin.site.register(CommunityAuthSite, CommunityAuthSiteAdmin)
 admin.site.register(CommunityAuthOrg)
 admin.site.unregister(User)  # have to unregister default User Admin...

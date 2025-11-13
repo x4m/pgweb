@@ -2,6 +2,44 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class Badge(models.Model):
+    """Achievements and recognitions that can be awarded to users"""
+    name = models.CharField(max_length=100, null=False, blank=False, unique=True,
+                           help_text="Badge name (e.g., 'First Commit', 'First Review')")
+    description = models.TextField(null=False, blank=True,
+                                   help_text="Description of what this badge represents")
+    icon = models.CharField(max_length=50, null=False, blank=False, default='fa-trophy',
+                           help_text="Font Awesome icon class (e.g., 'fa-trophy', 'fa-star')")
+    color = models.CharField(max_length=20, null=False, blank=False, default='#FFD700',
+                            help_text="Badge color in hex format (e.g., '#FFD700' for gold)")
+    order = models.IntegerField(null=False, blank=False, default=100,
+                                help_text="Display order (lower numbers show first)")
+    
+    class Meta:
+        ordering = ('order', 'name')
+    
+    def __str__(self):
+        return self.name
+
+
+class UserBadge(models.Model):
+    """Assignment of badges to users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='badges')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='awarded_to')
+    awarded_at = models.DateTimeField(auto_now_add=True)
+    awarded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='badges_awarded')
+    note = models.TextField(null=False, blank=True,
+                           help_text="Optional note about this badge award")
+    
+    class Meta:
+        unique_together = (('user', 'badge'),)
+        ordering = ('-awarded_at',)
+    
+    def __str__(self):
+        return f"{self.badge.name} - {self.user.username}"
+
+
 class CommunityAuthOrg(models.Model):
     orgname = models.CharField(max_length=100, null=False, blank=False, unique=True,
                                help_text="Name of the organisation")

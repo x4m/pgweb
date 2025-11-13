@@ -20,6 +20,9 @@ urlpatterns = [
     # Profile
     re_path(r'^profile/$', pgweb.account.views.profile),
     re_path(r'^profile/add_email/([0-9a-f]+)/$', pgweb.account.views.confirm_add_email),
+    
+    # User badges
+    re_path(r'^badges/([^/]+)/$', pgweb.account.views.user_badges),
 
     # List of items to edit
     re_path(r'^edit/(.*)/$', pgweb.account.views.listobjects),
