@@ -1,0 +1,24 @@
+{%extends "base/page.html"%}
+{%block title%}{{title}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-exclamation-triangle text-warning"></i> Organization Manager Access Required</h1>
+  
+  <div class="alert alert-warning mt-4">
+    <h5>You need to be an organization manager to access this page</h5>
+    <p class="mb-0">
+      Organization managers can create badges for their organizations and review badge claims.
+      If you should have access, please contact your organization administrator.
+    </p>
+  </div>
+  
+  <div class="mt-4">
+    <a href="/account/" class="btn btn-primary">
+      <i class="fa fa-arrow-left"></i> Back to Account
+    </a>
+    <a href="/account/badges/" class="btn btn-secondary">
+      <i class="fa fa-trophy"></i> Browse Badges
+    </a>
+  </div>
+</div>
+{%endblock%}

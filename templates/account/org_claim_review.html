@@ -1,0 +1,148 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}{{title}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-tasks"></i> Review Badge Claim</h1>
+  
+  <div class="row mt-4">
+    <!-- Left column: Claim Details -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fa fa-info-circle"></i> Claim Details</h5>
+        </div>
+        <div class="card-body">
+          <h4>
+            <i class="fa {{claim.badge.icon}}" style="color: {{claim.badge.color}};"></i>
+            {{claim.badge.name}}
+          </h4>
+          <p class="text-muted">{{claim.badge.description}}</p>
+          
+          <hr>
+          
+          <dl class="row">
+            <dt class="col-sm-4">Organization:</dt>
+            <dd class="col-sm-8">{{claim.badge.organisation.name}}</dd>
+            
+            <dt class="col-sm-4">User:</dt>
+            <dd class="col-sm-8">
+              <strong>{{claim.user.username}}</strong>
+              <br>
+              <small>{{claim.user.email}}</small>
+            </dd>
+            
+            <dt class="col-sm-4">Claimed:</dt>
+            <dd class="col-sm-8">
+              {{claim.claimed_at|date:"F d, Y"}}
+              <br>
+              <small class="text-muted">{{claim.claimed_at|timesince}} ago</small>
+            </dd>
+            
+            <dt class="col-sm-4">Current Status:</dt>
+            <dd class="col-sm-8">
+              {%if claim.status == 'pending'%}
+              <span class="badge badge-warning">Pending Review</span>
+              {%elif claim.status == 'approved'%}
+              <span class="badge badge-success">Approved</span>
+              {%elif claim.status == 'rejected'%}
+              <span class="badge badge-danger">Rejected</span>
+              {%endif%}
+            </dd>
+          </dl>
+          
+          {%if claim.message%}
+          <hr>
+          <h5>User's Message:</h5>
+          <div class="alert alert-light">
+            <i class="fa fa-comment"></i>
+            <p class="mb-0">{{claim.message}}</p>
+          </div>
+          {%else%}
+          <div class="alert alert-warning">
+            <i class="fa fa-info-circle"></i> User didn't provide a message
+          </div>
+          {%endif%}
+          
+          {%if claim.reviewed_by%}
+          <hr>
+          <h5>Review History:</h5>
+          <p>
+            <strong>Reviewed by:</strong> {{claim.reviewed_by.username}}<br>
+            <strong>Date:</strong> {{claim.reviewed_at|date:"F d, Y H:i"}}
+          </p>
+          {%if claim.review_note%}
+          <div class="alert alert-light">
+            <strong>Previous note:</strong><br>
+            {{claim.review_note}}
+          </div>
+          {%endif%}
+          {%endif%}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right column: Review Form -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="fa fa-gavel"></i> Your Decision</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" action=".">
+            {% csrf_token %}
+            
+            {%if form.errors%}
+            <div class="alert alert-danger">
+              <h5>Please correct the errors:</h5>
+              {{form.errors}}
+            </div>
+            {%endif%}
+            
+            <div class="form-group">
+              <label for="{{form.status.id_for_label}}">
+                <strong>Decision</strong> <span class="text-danger">*</span>
+              </label>
+              {{form.status}}
+              {%if form.status.help_text%}
+              <small class="form-text text-muted">{{form.status.help_text}}</small>
+              {%endif%}
+            </div>
+            
+            <div class="form-group">
+              <label for="{{form.review_note.id_for_label}}">
+                <strong>Note to User</strong>
+              </label>
+              {{form.review_note}}
+              {%if form.review_note.help_text%}
+              <small class="form-text text-muted">{{form.review_note.help_text}}</small>
+              {%endif%}
+            </div>
+            
+            <div class="alert alert-info">
+              <h6><i class="fa fa-lightbulb"></i> Tips</h6>
+              <ul class="mb-0 small">
+                <li><strong>Approve:</strong> Badge will immediately appear on user's profile</li>
+                <li><strong>Reject:</strong> User will see your note explaining why</li>
+                <li><strong>Note:</strong> Always provide a friendly message!</li>
+              </ul>
+            </div>
+            
+            <hr>
+            
+            <div class="form-group">
+              <button type="submit" class="btn btn-success btn-lg btn-block">
+                <i class="fa fa-check"></i> Submit Review
+              </button>
+              <a href="/account/org/claims/" class="btn btn-secondary btn-block">
+                <i class="fa fa-times"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%endblock%}
+

@@ -1,0 +1,111 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}Create Badge - {{org.name}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-plus-circle"></i> Create Badge</h1>
+  <p class="lead">Create a new badge for <strong>{{org.name}}</strong></p>
+  
+  <div class="card">
+    <div class="card-body">
+      <form method="post" action=".">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label for="name"><strong>Badge Name</strong> <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="name" name="name" required
+                 placeholder="e.g., PGConf.dev 2025 Volunteer">
+          <small class="form-text text-muted">
+            Be specific! Include year if it's an annual badge.
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="description"><strong>Description</strong> <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="description" name="description" rows="4" required
+                    placeholder="Describe what this badge represents and how users can earn it..."></textarea>
+          <small class="form-text text-muted">
+            Explain clearly what qualifies someone for this badge. This helps users know if they should claim it.
+          </small>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="icon"><strong>Icon</strong></label>
+              <input type="text" class="form-control" id="icon" name="icon" value="fa-trophy"
+                     placeholder="fa-trophy">
+              <small class="form-text text-muted">
+                Font Awesome icon class. Browse at <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com/icons</a>
+                <br>Examples: <code>fa-trophy</code>, <code>fa-star</code>, <code>fa-award</code>, <code>fa-hands-helping</code>
+              </small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="color"><strong>Color</strong></label>
+              <input type="text" class="form-control" id="color" name="color" value="#FFD700"
+                     placeholder="#FFD700">
+              <small class="form-text text-muted">
+                Hex color code. Examples: <code>#FFD700</code> (gold), <code>#4CAF50</code> (green), <code>#E91E63</code> (pink)
+              </small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="active" name="active" checked>
+            <label class="form-check-label" for="active">
+              <strong>Active</strong> - Users can claim this badge
+            </label>
+          </div>
+          <small class="form-text text-muted">
+            Uncheck to hide this badge from the public gallery (you can activate it later)
+          </small>
+        </div>
+        
+        <hr>
+        
+        <div class="alert alert-light">
+          <h5><i class="fa fa-eye"></i> Preview</h5>
+          <div class="text-center p-3">
+            <i class="fa fa-trophy fa-4x" id="preview-icon" style="color: #FFD700;"></i>
+            <h4 id="preview-name" class="mt-2">Badge Name</h4>
+            <p id="preview-description" class="text-muted">Description will appear here</p>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fa fa-save"></i> Create Badge
+          </button>
+          <a href="/account/org/badges/" class="btn btn-secondary">
+            <i class="fa fa-times"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Live preview
+document.getElementById('name').addEventListener('input', function(e) {
+  document.getElementById('preview-name').textContent = e.target.value || 'Badge Name';
+});
+document.getElementById('description').addEventListener('input', function(e) {
+  document.getElementById('preview-description').textContent = e.target.value || 'Description will appear here';
+});
+document.getElementById('icon').addEventListener('input', function(e) {
+  let icon = e.target.value || 'fa-trophy';
+  let iconEl = document.getElementById('preview-icon');
+  iconEl.className = 'fa ' + icon + ' fa-4x';
+});
+document.getElementById('color').addEventListener('input', function(e) {
+  let color = e.target.value || '#FFD700';
+  document.getElementById('preview-icon').style.color = color;
+});
+</script>
+{%endblock%}
+

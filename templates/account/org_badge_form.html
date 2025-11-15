@@ -1,0 +1,125 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}{{title}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-trophy"></i> {{action}} Badge</h1>
+  
+  <div class="card mt-4">
+    <div class="card-body">
+      <form method="post" action=".">
+        {% csrf_token %}
+        
+        {%if form.errors%}
+        <div class="alert alert-danger">
+          <h5>Please correct the errors below:</h5>
+          {{form.errors}}
+        </div>
+        {%endif%}
+        
+        <div class="form-group">
+          <label for="{{form.organisation.id_for_label}}">
+            <strong>Organization</strong> <span class="text-danger">*</span>
+          </label>
+          {{form.organisation}}
+          {%if form.organisation.help_text%}
+          <small class="form-text text-muted">{{form.organisation.help_text}}</small>
+          {%endif%}
+          {%if form.organisation.errors%}
+          <div class="text-danger">{{form.organisation.errors}}</div>
+          {%endif%}
+        </div>
+        
+        <div class="form-group">
+          <label for="{{form.name.id_for_label}}">
+            <strong>Badge Name</strong> <span class="text-danger">*</span>
+          </label>
+          {{form.name}}
+          {%if form.name.help_text%}
+          <small class="form-text text-muted">{{form.name.help_text}}</small>
+          {%endif%}
+          {%if form.name.errors%}
+          <div class="text-danger">{{form.name.errors}}</div>
+          {%endif%}
+        </div>
+        
+        <div class="form-group">
+          <label for="{{form.description.id_for_label}}">
+            <strong>Description</strong> <span class="text-danger">*</span>
+          </label>
+          {{form.description}}
+          {%if form.description.help_text%}
+          <small class="form-text text-muted">{{form.description.help_text}}</small>
+          {%endif%}
+          {%if form.description.errors%}
+          <div class="text-danger">{{form.description.errors}}</div>
+          {%endif%}
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="{{form.icon.id_for_label}}">
+                <strong>Icon</strong> <span class="text-danger">*</span>
+              </label>
+              {{form.icon}}
+              {%if form.icon.help_text%}
+              <small class="form-text text-muted">{{form.icon.help_text}}</small>
+              {%endif%}
+              {%if form.icon.errors%}
+              <div class="text-danger">{{form.icon.errors}}</div>
+              {%endif%}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="{{form.color.id_for_label}}">
+                <strong>Color</strong> <span class="text-danger">*</span>
+              </label>
+              {{form.color}}
+              {%if form.color.help_text%}
+              <small class="form-text text-muted">{{form.color.help_text}}</small>
+              {%endif%}
+              {%if form.color.errors%}
+              <div class="text-danger">{{form.color.errors}}</div>
+              {%endif%}
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group form-check">
+          <input type="checkbox" class="form-check-input" id="{{form.active.id_for_label}}" name="active" {%if form.active.value%}checked{%endif%}>
+          <label class="form-check-label" for="{{form.active.id_for_label}}">
+            <strong>Active</strong> - Users can claim this badge
+          </label>
+          {%if form.active.help_text%}
+          <small class="form-text text-muted">{{form.active.help_text}}</small>
+          {%endif%}
+        </div>
+        
+        <hr>
+        
+        <div class="alert alert-info">
+          <h5><i class="fa fa-lightbulb"></i> Tips</h5>
+          <ul class="mb-0">
+            <li><strong>Badge Name:</strong> Be specific (e.g., "PGConf.dev 2025 Volunteer" not just "Volunteer")</li>
+            <li><strong>Icon:</strong> Browse Font Awesome icons at <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com/icons</a></li>
+            <li><strong>Color:</strong> Use your organization's brand colors (hex format, e.g., #FFD700)</li>
+            <li><strong>Active:</strong> Uncheck to hide badge from claim gallery (useful for preparing future badges)</li>
+          </ul>
+        </div>
+        
+        <div class="form-group mt-4">
+          <button type="submit" class="btn btn-success btn-lg">
+            <i class="fa fa-save"></i> {{action}} Badge
+          </button>
+          <a href="/account/org/badges/" class="btn btn-secondary">
+            <i class="fa fa-times"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{%endblock%}
+

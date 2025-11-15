@@ -1,0 +1,135 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}Review Badge Claims - {{org.name}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-inbox"></i> Review Badge Claims</h1>
+  <p class="lead">{{org.name}}</p>
+  
+  <div class="mb-3">
+    <a href="/account/org/badges/" class="btn btn-secondary">
+      <i class="fa fa-arrow-left"></i> Back to Badge Management
+    </a>
+  </div>
+  
+  <h3>Pending Claims ({{pending_claims|length}})</h3>
+  
+  {%if pending_claims%}
+  {%for claim in pending_claims%}
+  <div class="card mb-3">
+    <div class="card-header bg-warning">
+      <div class="row">
+        <div class="col-md-8">
+          <h5 class="mb-0">
+            <i class="fa {{claim.badge.icon}}" style="color: {{claim.badge.color}};"></i>
+            {{claim.badge.name}}
+          </h5>
+          <small>Claimed by <strong>{{claim.user.username}}</strong> on {{claim.claimed_at|date:"M d, Y"}}</small>
+        </div>
+        <div class="col-md-4 text-right">
+          <span class="badge badge-warning">Pending Review</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h6>User's Message:</h6>
+      {%if claim.message%}
+      <p class="border-left pl-3">{{claim.message}}</p>
+      {%else%}
+      <p class="text-muted"><em>No message provided</em></p>
+      {%endif%}
+      
+      <hr>
+      
+      <form method="post" action="." class="form-inline">
+        {% csrf_token %}
+        <input type="hidden" name="claim_id" value="{{claim.id}}">
+        
+        <div class="form-group mr-2">
+          <label for="review_note_{{claim.id}}" class="mr-2">Review Note (optional):</label>
+          <input type="text" class="form-control" id="review_note_{{claim.id}}" name="review_note"
+                 placeholder="Add a personal note for the user...">
+        </div>
+        
+        <button type="submit" name="action" value="approve" class="btn btn-success mr-2">
+          <i class="fa fa-check"></i> Approve
+        </button>
+        <button type="submit" name="action" value="reject" class="btn btn-danger"
+                onclick="return confirm('Are you sure you want to reject this claim?');">
+          <i class="fa fa-times"></i> Reject
+        </button>
+      </form>
+      
+      <div class="mt-2">
+        <small class="text-muted">
+          <a href="/account/badges/{{claim.user.username}}/" target="_blank">
+            View {{claim.user.username}}'s badge profile
+          </a>
+        </small>
+      </div>
+    </div>
+  </div>
+  {%endfor%}
+  {%else%}
+  <div class="alert alert-success">
+    <i class="fa fa-check-circle"></i> No pending claims! All caught up.
+  </div>
+  {%endif%}
+  
+  <hr class="my-4">
+  
+  <h3>Recently Reviewed ({{reviewed_claims|length}})</h3>
+  
+  {%if reviewed_claims%}
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Badge</th>
+          <th>Status</th>
+          <th>Reviewed By</th>
+          <th>Date</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%for claim in reviewed_claims%}
+        <tr>
+          <td>{{claim.user.username}}</td>
+          <td>
+            <i class="fa {{claim.badge.icon}}" style="color: {{claim.badge.color}};"></i>
+            {{claim.badge.name}}
+          </td>
+          <td>
+            {%if claim.status == 'approved'%}
+            <span class="badge badge-success">Approved</span>
+            {%else%}
+            <span class="badge badge-danger">Rejected</span>
+            {%endif%}
+          </td>
+          <td>{{claim.reviewed_by.username}}</td>
+          <td>{{claim.reviewed_at|date:"M d, Y"}}</td>
+          <td>{{claim.review_note|truncatewords:10}}</td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+  </div>
+  {%else%}
+  <p class="text-muted">No claims have been reviewed yet.</p>
+  {%endif%}
+  
+  <div class="alert alert-info mt-4">
+    <h5><i class="fa fa-lightbulb"></i> Review Tips</h5>
+    <ul class="mb-0">
+      <li><strong>Read user's message</strong> - They explain why they deserve the badge</li>
+      <li><strong>Verify if possible</strong> - Check records, attendance lists, etc.</li>
+      <li><strong>Add review notes</strong> - Personal messages make it special!</li>
+      <li><strong>Be prompt</strong> - Try to review within a few days</li>
+      <li><strong>Be fair</strong> - If rejecting, explain why clearly</li>
+    </ul>
+  </div>
+</div>
+{%endblock%}
+
