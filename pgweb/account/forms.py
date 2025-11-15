@@ -218,51 +218,6 @@ class ConfirmSubmitForm(forms.Form):
 
 
 class BadgeForm(forms.ModelForm):
-    """Form for organization managers to create badges"""
-    
-    class Meta:
-        model = Badge
-        fields = ['name', 'description', 'organisation', 'icon', 'color', 'active']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., PGConf.dev 2025 Volunteer'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe what this badge represents and how to earn it'}),
-            'organisation': forms.Select(attrs={'class': 'form-control'}),
-            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fa-trophy'}),
-            'color': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#FFD700'}),
-            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-        help_texts = {
-            'icon': 'Font Awesome icon class (e.g., fa-trophy, fa-star, fa-award). Browse at fontawesome.com',
-            'color': 'Hex color code (e.g., #FFD700 for gold, #4CAF50 for green)',
-            'active': 'If checked, users can claim this badge immediately',
-        }
-    
-    def __init__(self, user, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Filter organizations to only those the user manages
-        from pgweb.core.models import Organisation
-        self.fields['organisation'].queryset = Organisation.objects.filter(
-            managers=user,
-            approved=True
-        ).order_by('name')
-
-
-class BadgeClaimReviewForm(forms.ModelForm):
-    """Form for organization managers to review badge claims"""
-    
-    class Meta:
-        model = BadgeClaim
-        fields = ['status', 'review_note']
-        widgets = {
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'review_note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Add a note for the user (optional but recommended)'}),
-        }
-        help_texts = {
-            'review_note': 'This message will be visible to the user',
-        }
-
-
-class BadgeForm(forms.ModelForm):
     """Form for organization managers to create/edit badges"""
     
     class Meta:
@@ -285,6 +240,7 @@ class BadgeForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only show organizations this user manages
+        from pgweb.core.models import Organisation
         self.fields['organisation'].queryset = Organisation.objects.filter(
             managers=user,
             approved=True
