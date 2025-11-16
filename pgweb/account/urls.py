@@ -20,13 +20,13 @@ urlpatterns = [
     # Profile
     re_path(r'^profile/$', pgweb.account.views.profile),
     re_path(r'^profile/add_email/([0-9a-f]+)/$', pgweb.account.views.confirm_add_email),
-    
+
     # Badge system - Public
     re_path(r'^badges/$', pgweb.account.views.available_badges),
     re_path(r'^badges/claim/(\d+)/$', pgweb.account.views.claim_badge),
     re_path(r'^badges/my-claims/$', pgweb.account.views.my_badge_claims),
     re_path(r'^badges/([^/]+)/$', pgweb.account.views.user_badges),
-    
+
     # Badge system - Organization Managers
     re_path(r'^org/badges/$', pgweb.account.views.org_badges_list),
     re_path(r'^org/badges/create/$', pgweb.account.views.org_badge_create),
