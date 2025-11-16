@@ -1086,6 +1086,7 @@ def org_badge_edit(request, badge_id):
 
 
 @login_required
+@queryparams('status')
 def org_claims_list(request):
     """List badge claims for organizations user manages"""
     from pgweb.core.models import Organisation
