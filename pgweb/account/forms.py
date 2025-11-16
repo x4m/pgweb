@@ -219,7 +219,7 @@ class ConfirmSubmitForm(forms.Form):
 
 class BadgeForm(forms.ModelForm):
     """Form for organization managers to create/edit badges"""
-    
+
     class Meta:
         model = Badge
         fields = ['name', 'description', 'organisation', 'icon', 'color', 'active']
@@ -236,7 +236,7 @@ class BadgeForm(forms.ModelForm):
             'color': 'Hex color code (e.g., #FFD700 for gold)',
             'active': 'Check to allow users to claim this badge',
         }
-    
+
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only show organizations this user manages
@@ -250,13 +250,13 @@ class BadgeForm(forms.ModelForm):
 
 class BadgeClaimReviewForm(forms.ModelForm):
     """Form for organization managers to review badge claims"""
-    
+
     class Meta:
         model = BadgeClaim
         fields = ['status', 'review_note']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'}),
-            'review_note': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 
+            'review_note': forms.Textarea(attrs={'rows': 3, 'class': 'form-control',
                                                  'placeholder': 'Add a note for the user...'}),
         }
         help_texts = {
