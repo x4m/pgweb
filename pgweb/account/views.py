@@ -39,12 +39,13 @@ from pgweb.contributors.models import Contributor
 from pgweb.downloads.models import Product
 from pgweb.profserv.models import ProfessionalService
 
-from .models import CommunityAuthSite, CommunityAuthConsent, SecondaryEmail
+from .models import CommunityAuthSite, CommunityAuthConsent, SecondaryEmail, Badge, BadgeClaim, UserBadge
 from .forms import PgwebAuthenticationForm, ConfirmSubmitForm
 from .forms import CommunityAuthConsentForm
 from .forms import SignupForm, SignupOauthForm
 from .forms import UserForm, UserProfileForm, ContributorForm
 from .forms import AddEmailForm, PgwebPasswordResetForm
+from .forms import BadgeForm, BadgeClaimReviewForm
 from .oauthclient import get_encrypted_oauth_cookie, delete_encrypted_oauth_cookie_on
 from .oauthclient import OAuthException
 
@@ -92,9 +93,25 @@ def home(request):
             ],
         },
     ]
+    
+    # Get user's badge count
+    badge_count = UserBadge.objects.filter(user=request.user).count()
+    
+    # Check if user manages any organizations
+    managed_orgs = Organisation.objects.filter(managers=request.user, approved=True)
+    pending_claims_count = 0
+    if managed_orgs.exists():
+        pending_claims_count = BadgeClaim.objects.filter(
+            badge__organisation__in=managed_orgs,
+            status=BadgeClaim.PENDING
+        ).count()
 
     return render_pgweb(request, 'account', 'account/index.html', {
         'modobjects': filter(lambda x: any(x['objects']), modobjects),
+        'badge_count': badge_count,
+        'is_org_manager': managed_orgs.exists(),
+        'managed_orgs_count': managed_orgs.count(),
+        'pending_claims_count': pending_claims_count,
     })
 
 
@@ -909,3 +926,255 @@ def communityauth_subscribe(request, siteid):
         })
 
     return HttpResponse(status=201)
+
+
+def available_badges(request):
+    """List all available badges that users can claim"""
+    badges = Badge.objects.filter(active=True).select_related('organisation').prefetch_related('claims')
+    
+    # If user is logged in, annotate with their claim status
+    user_claims = {}
+    if request.user.is_authenticated:
+        claims = BadgeClaim.objects.filter(user=request.user).select_related('badge')
+        user_claims = {claim.badge_id: claim for claim in claims}
+    
+    return render_pgweb(request, 'account', 'account/available_badges.html', {
+        'badges': badges,
+        'user_claims': user_claims,
+        'title': 'Available Badges',
+    })
+
+
+@login_required
+def claim_badge(request, badge_id):
+    """User claims a badge"""
+    badge = get_object_or_404(Badge, pk=badge_id, active=True)
+    
+    # Check if already claimed
+    existing_claim = BadgeClaim.objects.filter(user=request.user, badge=badge).first()
+    if existing_claim:
+        return render_pgweb(request, 'account', 'account/badge_claim_exists.html', {
+            'badge': badge,
+            'claim': existing_claim,
+            'title': 'Badge Already Claimed',
+        })
+    
+    if request.method == 'POST':
+        message = request.POST.get('message', '').strip()
+        
+        # Create the claim
+        claim = BadgeClaim.objects.create(
+            user=request.user,
+            badge=badge,
+            message=message
+        )
+        
+        return HttpResponseRedirect('/account/badges/my-claims/')
+    
+    return render_pgweb(request, 'account', 'account/claim_badge.html', {
+        'badge': badge,
+        'title': f'Claim Badge: {badge.name}',
+    })
+
+
+@login_required
+def my_badge_claims(request):
+    """View user's badge claims and their status"""
+    claims = BadgeClaim.objects.filter(user=request.user).select_related('badge', 'badge__organisation', 'reviewed_by').order_by('-claimed_at')
+    
+    return render_pgweb(request, 'account', 'account/my_badge_claims.html', {
+        'claims': claims,
+        'title': 'My Badge Claims',
+    })
+
+
+def user_badges(request, username):
+    """Display a user's approved badge collection"""
+    user = get_object_or_404(User, username=username)
+    user_badges = UserBadge.objects.filter(user=user).select_related('badge', 'badge__organisation', 'claim')
+    
+    return render_pgweb(request, 'account', 'account/badges.html', {
+        'badge_user': user,
+        'user_badges': user_badges,
+        'title': f"{user.username}'s Badges",
+    })
+
+
+# Organization Manager Views
+
+@login_required
+def org_badges_list(request):
+    """List badges for organizations user manages"""
+    from pgweb.core.models import Organisation
+    
+    # Get organizations user manages
+    orgs = Organisation.objects.filter(managers=request.user, approved=True).prefetch_related('badges')
+    
+    if not orgs.exists():
+        return render_pgweb(request, 'account', 'account/org_no_access.html', {
+            'title': 'Organization Manager Access Required',
+        })
+    
+    return render_pgweb(request, 'account', 'account/org_badges_list.html', {
+        'orgs': orgs,
+        'title': 'Manage Badges',
+    })
+
+
+@login_required
+def org_badge_create(request):
+    """Create a new badge"""
+    from pgweb.core.models import Organisation
+    from .forms import BadgeForm
+    
+    # Check if user manages any organizations
+    orgs = Organisation.objects.filter(managers=request.user, approved=True)
+    if not orgs.exists():
+        return render_pgweb(request, 'account', 'account/org_no_access.html', {
+            'title': 'Organization Manager Access Required',
+        })
+    
+    if request.method == 'POST':
+        form = BadgeForm(request.user, request.POST)
+        if form.is_valid():
+            badge = form.save(commit=False)
+            badge.created_by = request.user
+            # Verify user manages the organization
+            if badge.organisation.managers.filter(id=request.user.id).exists():
+                badge.save()
+                return HttpResponseRedirect('/account/org/badges/')
+            else:
+                form.add_error('organisation', 'You do not manage this organization')
+    else:
+        form = BadgeForm(request.user)
+    
+    return render_pgweb(request, 'account', 'account/org_badge_form.html', {
+        'form': form,
+        'title': 'Create Badge',
+        'action': 'Create',
+    })
+
+
+@login_required
+def org_badge_edit(request, badge_id):
+    """Edit an existing badge"""
+    badge = get_object_or_404(Badge, pk=badge_id)
+    
+    # Check if user manages this badge's organization
+    if not badge.organisation.managers.filter(id=request.user.id).exists():
+        raise PermissionDenied("You do not manage this organization")
+    
+    if request.method == 'POST':
+        form = BadgeForm(request.user, request.POST, instance=badge)
+        if form.is_valid():
+            updated_badge = form.save(commit=False)
+            # Verify user still manages the organization
+            if updated_badge.organisation.managers.filter(id=request.user.id).exists():
+                updated_badge.save()
+                return HttpResponseRedirect('/account/org/badges/')
+            else:
+                form.add_error('organisation', 'You do not manage this organization')
+    else:
+        form = BadgeForm(request.user, instance=badge)
+    
+    return render_pgweb(request, 'account', 'account/org_badge_form.html', {
+        'form': form,
+        'badge': badge,
+        'title': f'Edit Badge: {badge.name}',
+        'action': 'Update',
+    })
+
+
+@login_required
+def org_claims_list(request):
+    """List badge claims for organizations user manages"""
+    from pgweb.core.models import Organisation
+    from django.db.models import Q
+    
+    # Get organizations user manages
+    orgs = Organisation.objects.filter(managers=request.user, approved=True)
+    
+    if not orgs.exists():
+        return render_pgweb(request, 'account', 'account/org_no_access.html', {
+            'title': 'Organization Manager Access Required',
+        })
+    
+    # Get claims for badges from user's organizations
+    claims = BadgeClaim.objects.filter(
+        badge__organisation__in=orgs
+    ).select_related('user', 'badge', 'badge__organisation', 'reviewed_by').order_by(
+        '-claimed_at'
+    )
+    
+    # Filter by status if requested
+    status_filter = request.GET.get('status', 'all')
+    if status_filter == 'pending':
+        claims = claims.filter(status=BadgeClaim.PENDING)
+    elif status_filter == 'approved':
+        claims = claims.filter(status=BadgeClaim.APPROVED)
+    elif status_filter == 'rejected':
+        claims = claims.filter(status=BadgeClaim.REJECTED)
+    
+    # Count by status
+    all_claims = BadgeClaim.objects.filter(badge__organisation__in=orgs)
+    pending_count = all_claims.filter(status=BadgeClaim.PENDING).count()
+    approved_count = all_claims.filter(status=BadgeClaim.APPROVED).count()
+    rejected_count = all_claims.filter(status=BadgeClaim.REJECTED).count()
+    
+    return render_pgweb(request, 'account', 'account/org_claims_list.html', {
+        'claims': claims,
+        'orgs': orgs,
+        'status_filter': status_filter,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'title': 'Review Badge Claims',
+    })
+
+
+@login_required
+def org_claim_review(request, claim_id):
+    """Review a specific badge claim"""
+    from .forms import BadgeClaimReviewForm
+    from django.utils import timezone
+    
+    claim = get_object_or_404(BadgeClaim, pk=claim_id)
+    
+    # Check if user manages this badge's organization
+    if not claim.badge.organisation.managers.filter(id=request.user.id).exists():
+        raise PermissionDenied("You do not manage this organization")
+    
+    if request.method == 'POST':
+        form = BadgeClaimReviewForm(request.POST, instance=claim)
+        if form.is_valid():
+            updated_claim = form.save(commit=False)
+            
+            # Set review info
+            if updated_claim.status != claim.status:
+                updated_claim.reviewed_by = request.user
+                updated_claim.reviewed_at = timezone.now()
+                
+                # Create UserBadge if approved
+                if updated_claim.status == BadgeClaim.APPROVED:
+                    UserBadge.objects.get_or_create(
+                        user=updated_claim.user,
+                        badge=updated_claim.badge,
+                        defaults={'claim': updated_claim}
+                    )
+                elif updated_claim.status == BadgeClaim.REJECTED:
+                    # Remove UserBadge if it exists (in case of status change)
+                    UserBadge.objects.filter(
+                        user=updated_claim.user,
+                        badge=updated_claim.badge
+                    ).delete()
+            
+            updated_claim.save()
+            return HttpResponseRedirect('/account/org/claims/')
+    else:
+        form = BadgeClaimReviewForm(instance=claim)
+    
+    return render_pgweb(request, 'account', 'account/org_claim_review.html', {
+        'claim': claim,
+        'form': form,
+        'title': f'Review Claim: {claim.badge.name}',
+    })

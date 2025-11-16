@@ -12,7 +12,7 @@ from pgweb.util.widgets import TemplateRenderWidget
 from pgweb.util.db import exec_to_dict
 from pgweb.account.views import OAUTH_PASSWORD_STORE
 
-from .models import CommunityAuthSite, CommunityAuthOrg, SecondaryEmail
+from .models import CommunityAuthSite, CommunityAuthOrg, SecondaryEmail, Badge, BadgeClaim, UserBadge
 
 
 class CommunityAuthSiteAdminForm(forms.ModelForm):
@@ -163,6 +163,182 @@ class PGUserAdmin(UserAdmin):
         return sf + ['secondaryemail__email', ]
 
 
+class BadgeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'organisation', 'active', 'created_at', 'created_by')
+    list_filter = ('active', 'organisation', 'created_at')
+    search_fields = ('name', 'description', 'organisation__name')
+    autocomplete_fields = ('organisation',)
+    readonly_fields = ('created_at', 'created_by')
+    ordering = ('-created_at',)
+    
+    def has_module_permission(self, request):
+        """Show in admin menu if user has any badge permission"""
+        return request.user.has_perm('account.view_badge') or request.user.has_perm('account.add_badge')
+    
+    def has_add_permission(self, request):
+        """Can add if user has permission and manages at least one org"""
+        from pgweb.core.models import Organisation
+        if not request.user.has_perm('account.add_badge'):
+            return False
+        if request.user.is_superuser:
+            return True
+        return Organisation.objects.filter(managers=request.user, approved=True).exists()
+    
+    def has_view_permission(self, request, obj=None):
+        """Can view if user has permission"""
+        return request.user.has_perm('account.view_badge')
+    
+    def has_change_permission(self, request, obj=None):
+        """Can change if user manages the badge's org"""
+        if not request.user.has_perm('account.change_badge'):
+            return False
+        if request.user.is_superuser:
+            return True
+        if obj:
+            return obj.organisation.managers.filter(id=request.user.id).exists()
+        return True  # For list view
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Filter organization dropdown to only show orgs user manages"""
+        form = super().get_form(request, obj, **kwargs)
+        if not request.user.is_superuser:
+            from pgweb.core.models import Organisation
+            user_orgs = Organisation.objects.filter(managers=request.user, approved=True)
+            form.base_fields['organisation'].queryset = user_orgs
+            if obj is None and user_orgs.count() == 1:
+                # Pre-select if user only manages one org
+                form.base_fields['organisation'].initial = user_orgs.first()
+        return form
+    
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:  # New badge
+            obj.created_by = request.user
+            # Ensure user manages the organization
+            if not request.user.is_superuser and not obj.organisation.managers.filter(id=request.user.id).exists():
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied("You can only create badges for organizations you manage")
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # If user is not superuser, only show badges from their organizations
+        if not request.user.is_superuser:
+            qs = qs.filter(organisation__managers=request.user)
+        return qs
+
+
+class BadgeClaimAdmin(admin.ModelAdmin):
+    list_display = ('user', 'badge', 'status', 'claimed_at', 'reviewed_by')
+    list_filter = ('status', 'badge__organisation', 'claimed_at')
+    search_fields = ('user__username', 'user__email', 'badge__name', 'message')
+    readonly_fields = ('claimed_at', 'reviewed_at', 'reviewed_by')
+    autocomplete_fields = ('user',)
+    ordering = ('-claimed_at',)
+    
+    fieldsets = (
+        ('Claim Information', {
+            'fields': ('user', 'badge', 'status', 'claimed_at', 'message')
+        }),
+        ('Review Information', {
+            'fields': ('reviewed_at', 'reviewed_by', 'review_note')
+        }),
+    )
+    
+    def has_module_permission(self, request):
+        """Show in admin menu if user has any badge claim permission"""
+        return request.user.has_perm('account.view_badgeclaim') or request.user.has_perm('account.change_badgeclaim')
+    
+    def has_add_permission(self, request):
+        """Users can't add claims directly - they must use the claim form"""
+        return False
+    
+    def has_view_permission(self, request, obj=None):
+        """Can view if user has permission"""
+        return request.user.has_perm('account.view_badgeclaim')
+    
+    def has_change_permission(self, request, obj=None):
+        """Can change if user manages the badge's org"""
+        if not request.user.has_perm('account.change_badgeclaim'):
+            return False
+        if request.user.is_superuser:
+            return True
+        if obj:
+            return obj.badge.organisation.managers.filter(id=request.user.id).exists()
+        return True  # For list view
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # If user is not superuser, only show claims for badges from their organizations
+        if not request.user.is_superuser:
+            qs = qs.filter(badge__organisation__managers=request.user)
+        return qs
+    
+    def save_model(self, request, obj, form, change):
+        from django.utils import timezone
+        from .models import UserBadge
+        
+        # Track if status changed to approved
+        if change and 'status' in form.changed_data:
+            if obj.status == BadgeClaim.APPROVED:
+                obj.reviewed_by = request.user
+                obj.reviewed_at = timezone.now()
+                
+                # Create UserBadge if it doesn't exist
+                UserBadge.objects.get_or_create(
+                    user=obj.user,
+                    badge=obj.badge,
+                    defaults={'claim': obj}
+                )
+            elif obj.status == BadgeClaim.REJECTED:
+                obj.reviewed_by = request.user
+                obj.reviewed_at = timezone.now()
+        
+        super().save_model(request, obj, form, change)
+
+
+class UserBadgeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'badge', 'awarded_at')
+    list_filter = ('badge__organisation', 'awarded_at')
+    search_fields = ('user__username', 'user__email', 'badge__name')
+    readonly_fields = ('awarded_at',)
+    autocomplete_fields = ('user',)
+    ordering = ('-awarded_at',)
+    
+    def has_module_permission(self, request):
+        """Show in admin menu if user has badge view permission"""
+        from pgweb.core.models import Organisation
+        if request.user.is_superuser:
+            return True
+        return Organisation.objects.filter(managers=request.user, approved=True).exists()
+    
+    def has_add_permission(self, request):
+        """Can't add directly - badges are created when claims are approved"""
+        return False
+    
+    def has_view_permission(self, request, obj=None):
+        """Can view if user manages the badge's org"""
+        from pgweb.core.models import Organisation
+        if request.user.is_superuser:
+            return True
+        if obj:
+            return obj.badge.organisation.managers.filter(id=request.user.id).exists()
+        return Organisation.objects.filter(managers=request.user, approved=True).exists()
+    
+    def has_change_permission(self, request, obj=None):
+        """Can't change - badges are read-only"""
+        return False
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # If user is not superuser, only show badges from their organizations
+        if not request.user.is_superuser:
+            qs = qs.filter(badge__organisation__managers=request.user)
+        return qs
+
+
+admin.site.register(Badge, BadgeAdmin)
+admin.site.register(BadgeClaim, BadgeClaimAdmin)
+admin.site.register(UserBadge, UserBadgeAdmin)
 admin.site.register(CommunityAuthSite, CommunityAuthSiteAdmin)
 admin.site.register(CommunityAuthOrg)
 admin.site.unregister(User)  # have to unregister default User Admin...

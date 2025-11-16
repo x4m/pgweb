@@ -1,4 +1,5 @@
 from django import forms
+from pgweb.account.models import Badge, BadgeClaim
 from django.contrib.auth.forms import AuthenticationForm
 
 import re
@@ -214,3 +215,51 @@ class ConfirmSubmitForm(forms.Form):
     def __init__(self, objtype, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['confirm'].help_text = 'Confirm that you are ready to submit this {}.'.format(objtype)
+
+
+class BadgeForm(forms.ModelForm):
+    """Form for organization managers to create/edit badges"""
+    
+    class Meta:
+        model = Badge
+        fields = ['name', 'description', 'organisation', 'icon', 'color', 'active']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fa-trophy'}),
+            'color': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#FFD700'}),
+        }
+        help_texts = {
+            'name': 'Badge name (e.g., "PGConf.dev 2025 Volunteer")',
+            'description': 'What this badge represents and how to earn it',
+            'icon': 'Font Awesome icon class (browse at https://fontawesome.com/icons)',
+            'color': 'Hex color code (e.g., #FFD700 for gold)',
+            'active': 'Check to allow users to claim this badge',
+        }
+    
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show organizations this user manages
+        from pgweb.core.models import Organisation
+        self.fields['organisation'].queryset = Organisation.objects.filter(
+            managers=user,
+            approved=True
+        )
+        self.fields['organisation'].widget.attrs['class'] = 'form-control'
+
+
+class BadgeClaimReviewForm(forms.ModelForm):
+    """Form for organization managers to review badge claims"""
+    
+    class Meta:
+        model = BadgeClaim
+        fields = ['status', 'review_note']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'review_note': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 
+                                                 'placeholder': 'Add a note for the user...'}),
+        }
+        help_texts = {
+            'status': 'Approve or reject this badge claim',
+            'review_note': 'Your message to the user (recommended)',
+        }

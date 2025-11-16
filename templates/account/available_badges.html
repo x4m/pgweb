@@ -1,0 +1,81 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%load badge_tags%}
+{%block title%}Available Badges{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-trophy text-warning"></i> Available Badges</h1>
+  <p class="lead">Browse and claim badges from PostgreSQL community organizations</p>
+  
+  {%if user.is_authenticated%}
+  <div class="alert alert-info">
+    <i class="fa fa-info-circle"></i> 
+    Click on any badge to claim it. Organization managers will review your request.
+    <a href="/account/badges/my-claims/" class="btn btn-sm btn-primary ml-2">
+      <i class="fa fa-list"></i> View My Claims
+    </a>
+  </div>
+  {%else%}
+  <div class="alert alert-warning">
+    <i class="fa fa-sign-in-alt"></i> 
+    <a href="/account/login/">Log in</a> to claim badges
+  </div>
+  {%endif%}
+  
+  {%if badges%}
+  <div class="row mt-4">
+    {%for badge in badges%}
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <div class="text-center mb-3">
+            <i class="fa {{badge.icon}} fa-3x" style="color: {{badge.color}};"></i>
+          </div>
+          <h5 class="card-title">{{badge.name}}</h5>
+          <p class="text-muted small">
+            <i class="fa fa-building"></i> {{badge.organisation.name}}
+          </p>
+          <p class="card-text">{{badge.description}}</p>
+          
+          {%if user.is_authenticated%}
+            {%if badge.id in user_claims%}
+              {%with claim=user_claims|get_item:badge.id%}
+                {%if claim.status == 'pending'%}
+                <div class="alert alert-warning small">
+                  <i class="fa fa-clock"></i> Claim Pending Review
+                </div>
+                {%elif claim.status == 'approved'%}
+                <div class="alert alert-success small">
+                  <i class="fa fa-check-circle"></i> Badge Earned!
+                </div>
+                {%elif claim.status == 'rejected'%}
+                <div class="alert alert-danger small">
+                  <i class="fa fa-times-circle"></i> Claim Rejected
+                </div>
+                {%endif%}
+              {%endwith%}
+            {%else%}
+            <a href="/account/badges/claim/{{badge.id}}/" class="btn btn-primary btn-block">
+              <i class="fa fa-hand-paper"></i> Claim This Badge
+            </a>
+            {%endif%}
+          {%endif%}
+        </div>
+        <div class="card-footer bg-transparent">
+          <small class="text-muted">
+            <i class="fa fa-users"></i> {{badge.awarded_to.count}} earned
+          </small>
+        </div>
+      </div>
+    </div>
+    {%endfor%}
+  </div>
+  {%else%}
+  <div class="alert alert-info mt-4">
+    <h5><i class="fa fa-info-circle"></i> No Badges Available Yet</h5>
+    <p class="mb-0">Organizations haven't created any badges yet. Check back later!</p>
+  </div>
+  {%endif%}
+</div>
+{%endblock%}
+

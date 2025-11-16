@@ -1,0 +1,118 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}{{title}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-tasks text-primary"></i> Review Badge Claims</h1>
+  <p class="lead">Review and approve badge claims for your organizations</p>
+  
+  <div class="mb-4">
+    <a href="/account/org/badges/" class="btn btn-secondary">
+      <i class="fa fa-trophy"></i> Manage Badges
+    </a>
+    <a href="/account/" class="btn btn-secondary">
+      <i class="fa fa-arrow-left"></i> Back to Account
+    </a>
+  </div>
+  
+  <!-- Status Filter -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5>Filter by Status</h5>
+      <div class="btn-group" role="group">
+        <a href="?status=all" class="btn {%if status_filter == 'all'%}btn-primary{%else%}btn-outline-primary{%endif%}">
+          All ({{pending_count|add:approved_count|add:rejected_count}})
+        </a>
+        <a href="?status=pending" class="btn {%if status_filter == 'pending'%}btn-warning{%else%}btn-outline-warning{%endif%}">
+          Pending ({{pending_count}})
+        </a>
+        <a href="?status=approved" class="btn {%if status_filter == 'approved'%}btn-success{%else%}btn-outline-success{%endif%}">
+          Approved ({{approved_count}})
+        </a>
+        <a href="?status=rejected" class="btn {%if status_filter == 'rejected'%}btn-danger{%else%}btn-outline-danger{%endif%}">
+          Rejected ({{rejected_count}})
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  {%if claims%}
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Badge</th>
+          <th>Organization</th>
+          <th>Status</th>
+          <th>Claimed</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%for claim in claims%}
+        <tr>
+          <td>
+            <strong>{{claim.user.username}}</strong>
+            <br>
+            <small class="text-muted">{{claim.user.email}}</small>
+          </td>
+          <td>
+            <i class="fa {{claim.badge.icon}}" style="color: {{claim.badge.color}};"></i>
+            {{claim.badge.name}}
+            {%if claim.message%}
+            <br>
+            <small class="text-muted">
+              <i class="fa fa-comment"></i> Has message
+            </small>
+            {%endif%}
+          </td>
+          <td>{{claim.badge.organisation.name}}</td>
+          <td>
+            {%if claim.status == 'pending'%}
+            <span class="badge badge-warning">Pending</span>
+            {%elif claim.status == 'approved'%}
+            <span class="badge badge-success">Approved</span>
+            {%elif claim.status == 'rejected'%}
+            <span class="badge badge-danger">Rejected</span>
+            {%endif%}
+            {%if claim.reviewed_by%}
+            <br>
+            <small class="text-muted">by {{claim.reviewed_by.username}}</small>
+            {%endif%}
+          </td>
+          <td>
+            {{claim.claimed_at|date:"M d, Y"}}
+            <br>
+            <small class="text-muted">{{claim.claimed_at|timesince}} ago</small>
+          </td>
+          <td>
+            <a href="/account/org/claims/review/{{claim.id}}/" class="btn btn-sm btn-primary">
+              <i class="fa fa-eye"></i> Review
+            </a>
+          </td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+  </div>
+  {%else%}
+  <div class="alert alert-info">
+    <h5><i class="fa fa-info-circle"></i> No Claims Found</h5>
+    <p class="mb-0">
+      {%if status_filter == 'pending'%}
+      There are no pending claims to review.
+      {%elif status_filter == 'approved'%}
+      No claims have been approved yet.
+      {%elif status_filter == 'rejected'%}
+      No claims have been rejected.
+      {%else%}
+      No one has claimed badges from your organizations yet.
+      Once users claim badges, they will appear here for review.
+      {%endif%}
+    </p>
+  </div>
+  {%endif%}
+</div>
+{%endblock%}
+
