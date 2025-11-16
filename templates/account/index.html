@@ -14,6 +14,43 @@ To submit a new record, or to edit an existing record, select the
 type of record in the menu on the left.
 </p>
 
+{%if is_org_manager%}
+<div class="alert alert-success">
+  <h4><i class="fa fa-building"></i> Organization Manager</h4>
+  <p>
+    You manage <strong>{{managed_orgs_count}}</strong> organization{%if managed_orgs_count != 1%}s{%endif%}.
+    {%if pending_claims_count > 0%}
+    <span class="badge badge-warning">{{pending_claims_count}} Pending Claim{%if pending_claims_count != 1%}s{%endif%}</span>
+    {%endif%}
+  </p>
+  <p class="mb-0">
+    <a href="/account/org/badges/" class="btn btn-sm btn-primary">
+      <i class="fa fa-cogs"></i> Manage Badges & Claims
+    </a>
+  </p>
+</div>
+{%endif%}
+
+<div class="alert alert-info">
+  <h4><i class="fa fa-trophy"></i> Community Badges</h4>
+  <p>
+    You have earned <strong>{{badge_count}}</strong> badge{%if badge_count != 1%}s{%endif%}!
+  </p>
+  <p class="mb-0">
+    <a href="/account/badges/" class="btn btn-sm btn-primary">
+      <i class="fa fa-search"></i> Browse Available Badges
+    </a>
+    {%if badge_count > 0%}
+    <a href="/account/badges/{{user.username}}/" class="btn btn-sm btn-success">
+      <i class="fa fa-trophy"></i> View Your Badges
+    </a>
+    {%endif%}
+    <a href="/account/badges/my-claims/" class="btn btn-sm btn-secondary">
+      <i class="fa fa-list"></i> My Claims
+    </a>
+  </p>
+</div>
+
 <h2>Permissions model</h2>
 <p>
 News, Events, Products and Professional Services are attached to an

@@ -79,6 +79,14 @@ sitenav = {
         {'title': 'Your account', 'link': '/account'},
         {'title': 'Profile', 'link': '/account/profile'},
         {'title': 'Mailing List Subscriptions', 'link': 'https://lists.postgresql.org/manage/'},
+        {'title': 'Badges', 'link': '/account/badges/', 'submenu': [
+            {'title': 'Browse All Badges', 'link': '/account/badges/'},
+            {'title': 'My Claims', 'link': '/account/badges/my-claims/'},
+        ]},
+        {'title': 'Organization Management', 'link': '/account/org/badges/', 'submenu': [
+            {'title': 'Manage Badges', 'link': '/account/org/badges/'},
+            {'title': 'Review Claims', 'link': '/account/org/claims/'},
+        ]},
         {'title': 'Submitted data', 'link': '/account', 'submenu': [
             {'title': 'News Articles', 'link': '/account/edit/news/'},
             {'title': 'Events', 'link': '/account/edit/events/'},

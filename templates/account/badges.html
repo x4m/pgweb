@@ -1,0 +1,88 @@
+{%extends "base/page.html"%}
+{%block title%}{{badge_user.username}}'s Badges{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1>
+    <i class="fa fa-trophy text-warning"></i> 
+    {{badge_user.username}}'s Achievement Badges
+  </h1>
+  
+  <p class="lead">
+    Recognition and achievements earned by {{badge_user.username}} in the PostgreSQL community.
+  </p>
+  
+  {%if user_badges%}
+  <div class="row mt-4">
+    {%for user_badge in user_badges%}
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <i class="fa {{user_badge.badge.icon}} fa-4x" style="color: {{user_badge.badge.color}};"></i>
+          </div>
+          <h5 class="card-title">{{user_badge.badge.name}}</h5>
+          <p class="text-muted small">
+            <i class="fa fa-building"></i> {{user_badge.badge.organisation.name}}
+          </p>
+          <p class="card-text text-muted">{{user_badge.badge.description}}</p>
+          
+          {%if user_badge.claim and user_badge.claim.review_note%}
+          <div class="alert alert-light small mt-3">
+            <i class="fa fa-comment"></i> {{user_badge.claim.review_note}}
+          </div>
+          {%endif%}
+        </div>
+        <div class="card-footer bg-transparent">
+          <small class="text-muted">
+            <i class="fa fa-calendar"></i> Earned on {{user_badge.awarded_at|date:"F d, Y"}}
+          </small>
+        </div>
+      </div>
+    </div>
+    {%endfor%}
+  </div>
+  
+  <div class="alert alert-success mt-4">
+    <h5><i class="fa fa-star"></i> Badge Summary</h5>
+    <p class="mb-0">
+      <strong>{{badge_user.username}}</strong> has earned <strong>{{user_badges|length}}</strong> 
+      badge{%if user_badges|length != 1%}s{%endif%} in the PostgreSQL community!
+    </p>
+  </div>
+  
+  {%else%}
+  <div class="alert alert-info mt-4">
+    <h5><i class="fa fa-info-circle"></i> No Badges Yet</h5>
+    <p class="mb-0">
+      {{badge_user.username}} hasn't earned any badges yet. Stay tuned for future achievements!
+    </p>
+  </div>
+  {%endif%}
+  
+  <hr class="my-5">
+  
+  <div class="text-center">
+    <h4>About Badges</h4>
+    <p class="text-muted">
+      Badges are created by PostgreSQL community organizations to recognize contributions, participation, and achievements.
+      Users can claim badges and organization managers review and approve requests.
+    </p>
+    {%if user.is_authenticated%}
+    <p>
+      <a href="/account/badges/" class="btn btn-primary">
+        <i class="fa fa-trophy"></i> Browse Available Badges
+      </a>
+      {%if user == badge_user%}
+      <a href="/account/badges/my-claims/" class="btn btn-secondary">
+        <i class="fa fa-list"></i> My Badge Claims
+      </a>
+      {%endif%}
+      <a href="/account/" class="btn btn-outline-primary">
+        <i class="fa fa-user"></i> My Account
+      </a>
+    </p>
+    {%endif%}
+  </div>
+</div>
+{%endblock%}
+

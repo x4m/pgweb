@@ -1,0 +1,74 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}Badge Already Claimed{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-info-circle"></i> Badge Already Claimed</h1>
+  
+  <div class="alert alert-warning mt-4">
+    <h5>You've already claimed this badge!</h5>
+    <p class="mb-0">You can only claim each badge once.</p>
+  </div>
+  
+  <div class="card mt-4">
+    <div class="card-body text-center">
+      <i class="fa {{badge.icon}} fa-4x mb-3" style="color: {{badge.color}};"></i>
+      <h3>{{badge.name}}</h3>
+      <p class="text-muted"><i class="fa fa-building"></i> {{badge.organisation.name}}</p>
+    </div>
+  </div>
+  
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5>Your Claim Status</h5>
+    </div>
+    <div class="card-body">
+      {%if claim.status == 'pending'%}
+      <div class="alert alert-warning">
+        <h5><i class="fa fa-clock"></i> Pending Review</h5>
+        <p>Claimed on {{claim.claimed_at|date:"F d, Y"}}</p>
+        <p class="mb-0">The organization managers are reviewing your request.</p>
+      </div>
+      {%elif claim.status == 'approved'%}
+      <div class="alert alert-success">
+        <h5><i class="fa fa-check-circle"></i> Approved!</h5>
+        <p>Reviewed by {{claim.reviewed_by.username}} on {{claim.reviewed_at|date:"F d, Y"}}</p>
+        {%if claim.review_note%}
+        <p><strong>Note:</strong> {{claim.review_note}}</p>
+        {%endif%}
+        <p class="mb-0">
+          <a href="/account/badges/{{user.username}}/" class="btn btn-primary">
+            <i class="fa fa-trophy"></i> View Your Badges
+          </a>
+        </p>
+      </div>
+      {%elif claim.status == 'rejected'%}
+      <div class="alert alert-danger">
+        <h5><i class="fa fa-times-circle"></i> Rejected</h5>
+        <p>Reviewed by {{claim.reviewed_by.username}} on {{claim.reviewed_at|date:"F d, Y"}}</p>
+        {%if claim.review_note%}
+        <p><strong>Reason:</strong> {{claim.review_note}}</p>
+        {%endif%}
+      </div>
+      {%endif%}
+      
+      {%if claim.message%}
+      <h6>Your Message:</h6>
+      <p class="text-muted">{{claim.message}}</p>
+      {%endif%}
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <a href="/account/badges/" class="btn btn-primary">
+      <i class="fa fa-arrow-left"></i> Back to Available Badges
+    </a>
+    <a href="/account/badges/my-claims/" class="btn btn-secondary">
+      <i class="fa fa-list"></i> View All My Claims
+    </a>
+  </div>
+</div>
+{%endblock%}
+
+
+
