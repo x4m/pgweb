@@ -222,7 +222,7 @@ class BadgeForm(forms.ModelForm):
 
     class Meta:
         model = Badge
-        fields = ['name', 'description', 'organisation', 'icon', 'color', 'active']
+        fields = ['name', 'description', 'organisation', 'icon', 'color']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -234,7 +234,6 @@ class BadgeForm(forms.ModelForm):
             'description': 'What this badge represents and how to earn it',
             'icon': 'Font Awesome icon class (browse at https://fontawesome.com/icons)',
             'color': 'Hex color code (e.g., #FFD700 for gold)',
-            'active': 'Check to allow users to claim this badge',
         }
 
     def __init__(self, user, *args, **kwargs):

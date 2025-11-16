@@ -930,7 +930,7 @@ def communityauth_subscribe(request, siteid):
 
 def available_badges(request):
     """List all available badges that users can claim"""
-    badges = Badge.objects.filter(active=True).select_related('organisation').prefetch_related('claims')
+    badges = Badge.objects.filter(approved=True, active=True).select_related('organisation').prefetch_related('claims')
 
     # If user is logged in, annotate with their claim status
     user_claims = {}
@@ -948,7 +948,7 @@ def available_badges(request):
 @login_required
 def claim_badge(request, badge_id):
     """User claims a badge"""
-    badge = get_object_or_404(Badge, pk=badge_id, active=True)
+    badge = get_object_or_404(Badge, pk=badge_id, approved=True, active=True)
 
     # Check if already claimed
     existing_claim = BadgeClaim.objects.filter(user=request.user, badge=badge).first()

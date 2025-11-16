@@ -19,8 +19,10 @@ class Badge(models.Model):
                             help_text="Font Awesome icon class (e.g., 'fa-trophy', 'fa-star', 'fa-award')")
     color = models.CharField(max_length=20, null=False, blank=False, default='#FFD700',
                              help_text="Badge color in hex format (e.g., '#FFD700' for gold)")
+    approved = models.BooleanField(null=False, blank=False, default=False,
+                                   help_text="Approved by site administrator (must be approved before users can claim)")
     active = models.BooleanField(null=False, blank=False, default=True,
-                                 help_text="Whether users can currently claim this badge")
+                                 help_text="Site admin only: Whether users can currently claim this badge")
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name='badges_created')

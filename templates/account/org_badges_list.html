@@ -6,6 +6,14 @@
   <h1><i class="fa fa-trophy text-warning"></i> Manage Badges</h1>
   <p class="lead">Create and manage badges for your organizations</p>
   
+  <div class="alert alert-info">
+    <h5><i class="fa fa-info-circle"></i> Badge Approval Process</h5>
+    <p class="mb-0">
+      Badges you create will need to be approved by a site administrator before users can claim them.
+      The <strong>"active"</strong> status can only be changed by administrators.
+    </p>
+  </div>
+  
   <div class="mb-4">
     <a href="/account/org/badges/create/" class="btn btn-success">
       <i class="fa fa-plus"></i> Create New Badge
@@ -47,10 +55,12 @@
                 <small class="text-muted">{{badge.description|truncatewords:15}}</small>
               </td>
               <td>
-                {%if badge.active%}
-                <span class="badge badge-success">Active</span>
+                {%if not badge.approved%}
+                <span class="badge badge-warning">Pending Approval</span>
+                {%elif badge.active%}
+                <span class="badge badge-success">Approved & Active</span>
                 {%else%}
-                <span class="badge badge-secondary">Inactive</span>
+                <span class="badge badge-secondary">Approved (Inactive)</span>
                 {%endif%}
               </td>
               <td>
