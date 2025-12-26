@@ -1,0 +1,96 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}{{title}}{%endblock%}
+{%block contents%}
+<div class="container">
+  <h1><i class="fa fa-trophy text-warning"></i> Manage Badges</h1>
+  <p class="lead">Create and manage badges for your organizations</p>
+  
+  <div class="alert alert-info">
+    <h5><i class="fa fa-info-circle"></i> Badge Approval Process</h5>
+    <p class="mb-0">
+      Badges you create will need to be approved by a site administrator before users can claim them.
+      The <strong>"active"</strong> status can only be changed by administrators.
+    </p>
+  </div>
+  
+  <div class="mb-4">
+    <a href="/account/org/badges/create/" class="btn btn-success">
+      <i class="fa fa-plus"></i> Create New Badge
+    </a>
+    <a href="/account/org/claims/" class="btn btn-primary">
+      <i class="fa fa-tasks"></i> Review Claims
+    </a>
+    <a href="/account/" class="btn btn-secondary">
+      <i class="fa fa-arrow-left"></i> Back to Account
+    </a>
+  </div>
+  
+  {%for org in orgs%}
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0"><i class="fa fa-building"></i> {{org.name}}</h4>
+    </div>
+    <div class="card-body">
+      {%if org.badges.all%}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Badge</th>
+              <th>Status</th>
+              <th>Claims</th>
+              <th>Awarded</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%for badge in org.badges.all%}
+            <tr>
+              <td>
+                <i class="fa {{badge.icon}}" style="color: {{badge.color}};"></i>
+                <strong>{{badge.name}}</strong>
+                <br>
+                <small class="text-muted">{{badge.description|truncatewords:15}}</small>
+              </td>
+              <td>
+                {%if not badge.approved%}
+                <span class="badge badge-warning">Pending Approval</span>
+                {%elif badge.active%}
+                <span class="badge badge-success">Approved & Active</span>
+                {%else%}
+                <span class="badge badge-secondary">Approved (Inactive)</span>
+                {%endif%}
+              </td>
+              <td>
+                <a href="/account/org/claims/?badge={{badge.id}}">
+                  {{badge.claims.count}} claims
+                </a>
+              </td>
+              <td>{{badge.awarded_to.count}} earned</td>
+              <td>{{badge.created_at|date:"M d, Y"}}</td>
+              <td>
+                <a href="/account/org/badges/edit/{{badge.id}}/" class="btn btn-sm btn-primary">
+                  <i class="fa fa-edit"></i> Edit
+                </a>
+              </td>
+            </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+      {%else%}
+      <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i> No badges created yet for this organization.
+        <a href="/account/org/badges/create/" class="btn btn-sm btn-primary ml-2">
+          <i class="fa fa-plus"></i> Create First Badge
+        </a>
+      </div>
+      {%endif%}
+    </div>
+  </div>
+  {%endfor%}
+</div>
+{%endblock%}
+
