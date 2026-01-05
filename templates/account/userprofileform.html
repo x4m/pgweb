@@ -94,9 +94,30 @@
       </div>
     {%endfor%}
 
+  {% if badges %}
+    <h2>Contributor badges</h2>
+    <table class="table">
+      <tbody>
+        {%for b in badges %}
+          {%if forloop.counter0|divisibleby:"4" %}
+            {%if not forloop.first%}</tr>{%endif%}
+            <tr>
+          {%endif%}
+          <td align="center">
+            <a href="/community/badge/{{b.id}}/">
+              <img src="{%if b.image %}{{b.image}}{%else%}/media/img/about/press/elephant.png{%endif%}" width="150"><br>
+              {{b}}
+            </a>
+          </td>
+          {%if forloop.last%}</tr>{%endif%}
+        {%endfor%}
+      </tbody>
+    </table>
+  {% endif %}
+
   {% if contribform %}
     <h2>Edit contributor information</h2>
-    <p>You can edit the information that's shown on the <a href="/community/contributors/" target="_blank" rel="noopener">contributors</a> page. Please be careful as your changes will take effect immediately!
+    <p>You can edit the information that's shown on your <a href="/community/people/{{user.username}}/" target="_blank" rel="noopener">profile</a> page. Please be careful as your changes will take effect immediately!
     </p>
     {% for field in contribform %}
       <div class="form-group row">
@@ -116,6 +137,12 @@
         </div>
       </div>
     {% endfor %}
+  {% elif badges %}
+    <h2>Create contributor profile</h2>
+    <p>You have been awarded contributor badges. To have your name included in the public people and badge holder lists, you can create a publicly visible profile page.</p>
+    <div>
+      <input type="checkbox" name="create_contributor_profile"> Create publicly visible profile page
+    </div>
   {% endif %}
 
   <div class="submit-row">

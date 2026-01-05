@@ -1,0 +1,42 @@
+{%extends "base/page.html"%}
+{%load pgfilters%}
+{%block title%}People in the PostgreSQL Community{%endblock%}
+{%block contents%}
+<h1>People in the PostgreSQL Community <i class="fa fa-users"></i></h1>
+<p>These are the fine people that have made contributions to PostgreSQL over the years.</p>
+
+<p>Recognized Significant and Major Contributors are listed on the
+ <a href="/community/contributors/">Contributors page</a>.
+</p>
+
+<p style="text-align: justify;">
+  {%for c in people %}
+    <nobr>{%if c.user%}<a href="/community/people/{{c.user.username}}/">{{c.firstname}} {{c.lastname}}</a>{%else%}{{c.firstname}} {{c.lastname}}{%endif%} {%if not forloop.last%}·{%endif%}</nobr>
+  {%endfor%}
+</p>
+
+<p>People are listed in alphabetical order.
+  If you are listed and want to claim your profile page, write a mail including your community account name to
+  <a href="mailto:contributors@postgresql.org">contributors@postgresql.org</a>.
+</p>
+
+<h1>Contribution Badges</h1>
+<table class="table">
+  <tbody>
+    {%for b in badges %}
+      {%if forloop.counter0|divisibleby:"4" %}
+        {%if not forloop.first%}</tr>{%endif%}
+        <tr>
+      {%endif%}
+      <td align="center">
+        <a href="/community/badge/{{b.id}}/">
+          <img src="{%if b.image %}{{b.image}}{%else%}/media/img/about/press/elephant.png{%endif%}" width="150"><br>
+          {{b}}
+        </a>
+      </td>
+      {%if forloop.last%}</tr>{%endif%}
+    {%endfor%}
+  </tbody>
+</table>
+
+{%endblock%}
