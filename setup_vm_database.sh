@@ -26,13 +26,19 @@ if [ -z "$VIRTUAL_ENV" ]; then
 fi
 
 echo ""
-echo "Step 1: Running database migrations..."
+echo "Step 1: Setting up Varnish functions for local development..."
+echo "----------------------------------------------------------------------"
+psql pgweb < sql/varnish_local.sql
+echo "✓ Varnish functions created"
+
+echo ""
+echo "Step 2: Running database migrations..."
 echo "----------------------------------------------------------------------"
 python manage.py migrate
 echo "✓ Migrations complete"
 
 echo ""
-echo "Step 2: Creating demo data..."
+echo "Step 3: Creating demo data..."
 echo "----------------------------------------------------------------------"
 python manage.py shell < setup_badge_demo_data.py
 
