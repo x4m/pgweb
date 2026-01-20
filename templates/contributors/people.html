@@ -11,7 +11,7 @@
 
 <p style="text-align: justify;">
   {%for c in people %}
-    <nobr>{%if c.user%}<a href="/community/people/{{c.user.username}}/">{{c.firstname}} {{c.lastname}}</a>{%else%}{{c.firstname}} {{c.lastname}}{%endif%} {%if not forloop.last%}·{%endif%}</nobr>
+    <nobr>{%if c.user%}<a href="/community/people/{{c.user.username}}/">{{c.firstname}} {{c.lastname}}</a>{%else%}{{c.firstname}} {{c.lastname}}{%endif%} {%if not forloop.last%}Â·{%endif%}</nobr>
   {%endfor%}
 </p>
 
