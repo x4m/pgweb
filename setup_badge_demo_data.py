@@ -52,13 +52,30 @@ Organisation.objects.filter(name__contains='Demo').delete()
 Contributor.objects.filter(email__contains='example.com').delete()
 print("  ✓ Cleaned up existing test users/orgs")
 
-# Get organization types (loaded from fixtures)
+# Get or create organization and contributor types
 print("\n3. Getting organization and contributor types...")
-org_type_community = OrganisationType.objects.get(typename='Open Source Project')
-org_type_nonprofit = OrganisationType.objects.get(typename='Not for profit')
-contrib_type_major = ContributorType.objects.get(typename='Major Contributors')
-contrib_type_significant = ContributorType.objects.get(typename='Significant Contributors')
-print(f"  ✓ Types loaded from fixtures")
+org_type_community, created = OrganisationType.objects.get_or_create(typename='Open Source Project')
+if created:
+    print(f"  ✓ Created: Open Source Project")
+org_type_nonprofit, created = OrganisationType.objects.get_or_create(typename='Not for profit')
+if created:
+    print(f"  ✓ Created: Not for profit")
+
+contrib_type_major, created = ContributorType.objects.get_or_create(
+    typename='Major Contributors',
+    defaults={'sortorder': 200, 'detailed': True, 'showemail': True}
+)
+if created:
+    print(f"  ✓ Created: Major Contributors")
+    
+contrib_type_significant, created = ContributorType.objects.get_or_create(
+    typename='Significant Contributors',
+    defaults={'sortorder': 300, 'detailed': False, 'showemail': True}
+)
+if created:
+    print(f"  ✓ Created: Significant Contributors")
+    
+print(f"  ✓ All types ready")
 
 # ============================================================================
 # CREATE USERS
