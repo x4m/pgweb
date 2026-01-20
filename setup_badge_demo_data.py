@@ -20,8 +20,27 @@ print("="*70)
 print("SETTING UP BADGE DEMO DATA")
 print("="*70)
 
+# Load initial fixtures if needed
+print("\n1. Loading initial data (if not already loaded)...")
+import os
+from django.core import management
+
+# Load fixtures for organization and contributor types
+fixtures_to_load = [
+    ('core', 'data.json'),
+    ('contributors', 'data.json'),
+]
+
+for app, fixture in fixtures_to_load:
+    try:
+        management.call_command('loaddata', fixture, app_label=app, verbosity=0)
+        print(f"  ✓ Loaded {app}/{fixture}")
+    except Exception as e:
+        # Fixtures might already be loaded
+        print(f"  ℹ {app}/{fixture}: {str(e)[:50]}...")
+
 # Clean up existing test data (optional - be careful in production!)
-print("\n1. Cleaning up existing data...")
+print("\n2. Cleaning up existing test data...")
 try:
     Badge.objects.all().delete()
     print("  ✓ Cleaned up existing badges")
@@ -33,27 +52,13 @@ Organisation.objects.filter(name__contains='Demo').delete()
 Contributor.objects.filter(email__contains='example.com').delete()
 print("  ✓ Cleaned up existing test users/orgs")
 
-# Create organization types
-print("\n2. Creating organization types...")
-org_type_community, _ = OrganisationType.objects.get_or_create(
-    typename='Community',
-    defaults={'sortkey': 1}
-)
-org_type_company, _ = OrganisationType.objects.get_or_create(
-    typename='Company',
-    defaults={'sortkey': 2}
-)
-
-# Create contributor types (for recognized contributors)
-print("\n3. Creating contributor types...")
-contrib_type_major, _ = ContributorType.objects.get_or_create(
-    ctype='Major',
-    defaults={'sortkey': 1}
-)
-contrib_type_significant, _ = ContributorType.objects.get_or_create(
-    ctype='Significant',
-    defaults={'sortkey': 2}
-)
+# Get organization types (loaded from fixtures)
+print("\n3. Getting organization and contributor types...")
+org_type_community = OrganisationType.objects.get(typename='Open Source Project')
+org_type_nonprofit = OrganisationType.objects.get(typename='Not for profit')
+contrib_type_major = ContributorType.objects.get(typename='Major Contributors')
+contrib_type_significant = ContributorType.objects.get(typename='Significant Contributors')
+print(f"  ✓ Types loaded from fixtures")
 
 # ============================================================================
 # CREATE USERS
@@ -163,7 +168,7 @@ print(f"    Manager: {orgmanager2.username}")
 
 org_company = Organisation.objects.create(
     name='Demo PostgreSQL Company',
-    orgtype=org_type_company,
+    orgtype=org_type_nonprofit,
     approved=True,
     address='789 Business Blvd',
     url='https://demo-pg-company.com'
